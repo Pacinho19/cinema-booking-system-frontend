@@ -352,4 +352,17 @@ function createTicketView(ticket){
     document.getElementById("ticketReservationDate").innerHTML = 'Ticket reservation date: ' + ticket.reservationDate;
     document.getElementById("ticketPrice").innerHTML = 'Ticket price: ' + ticket.screening.ticketPrice;
 
+    if( ticket.ticketState=='UNPAID'){
+        ticketStatusDiv = document.getElementById("ticketStatusDiv");
+        paidBtn = document.createElement("button");
+        paidBtn.classList.add("btn");
+        paidBtn.classList.add("btn-success");
+        paidBtn.style.marginLeft = "2%";
+        paidBtn.style.marginBottom = "2%";
+        paidBtn.style.width = "30%";
+        paidBtn.type = 'button';
+        paidBtn.innerHTML = 'Paid';
+        ticketStatusDiv.appendChild(paidBtn);
+    }
+
 }
