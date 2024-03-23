@@ -158,6 +158,7 @@ function getMovieByAlias() {
             createMovieView(obj);
         } else if (http.readyState === 4 && http.status != 200) {
             showErrorMessage(http.responseText);
+            redirect("/index.html");
         }
     };
 
@@ -229,6 +230,7 @@ function getScreening() {
             createScreeningView(obj);
         } else if (http.readyState === 4 && http.status != 200) {
             showErrorMessage(http.responseText);
+            redirect("/index.html");
         }
     };
 
@@ -272,7 +274,7 @@ function createScreeningView(screening) {
                 seatElement.setAttribute('data-toggle', 'modal');
                 seatElement.setAttribute('data-row', seat.row);
                 seatElement.setAttribute('data-seat', seat.seat);
-                seatElement.addEventListener("click", test);
+                seatElement.addEventListener("click", reservation);
             }
             rowContainer.appendChild(seatElement);
         }
@@ -285,8 +287,8 @@ function createScreeningView(screening) {
 
 }
 
-function test(e) {
-    var a = $(e.currentTarget); 
+function reservation(e) {
+    var a = $(e.currentTarget);
     var row = a.attr('data-row');
     var seat = a.attr('data-seat');
 
@@ -319,7 +321,7 @@ function confirmReservation() {
     http.send();
 }
 
-function getTicketInformation(){
+function getTicketInformation() {
     let http = createRequest("/ticket/" + getUrlParam('id'), "GET");
     http.onreadystatechange = function () {
         if (http.readyState === 4 && http.status === 200) {
@@ -331,13 +333,14 @@ function getTicketInformation(){
             createTicketView(obj);
         } else if (http.readyState === 4 && http.status != 200) {
             showErrorMessage(http.responseText);
+            redirect("/index.html");
         }
     };
 
     http.send();
 }
 
-function createTicketView(ticket){
+function createTicketView(ticket) {
     movieImg = document.getElementById("movieImg");
     movieImg.src = ticket.movie.imgUrl;
     movieImg.style.width = '200px';
@@ -348,11 +351,11 @@ function createTicketView(ticket){
     document.getElementById("screeningSeatAndRow").innerHTML = 'Row: ' + ticket.screeningSeat.row + ' Seat: ' + ticket.screeningSeat.seat;
     document.getElementById("screeningDate").innerHTML = 'Screaning date: ' + ticket.screening.date;
     document.getElementById("ticketStatus").innerHTML = 'Ticket status: ' + ticket.ticketState;
-    document.getElementById("ticketStatus").style.color = ticket.ticketState=='UNPAID' ? 'red' : 'green';
+    document.getElementById("ticketStatus").style.color = ticket.ticketState == 'UNPAID' ? 'red' : 'green';
     document.getElementById("ticketReservationDate").innerHTML = 'Ticket reservation date: ' + ticket.reservationDate;
     document.getElementById("ticketPrice").innerHTML = 'Ticket price: ' + ticket.screening.ticketPrice;
 
-    if( ticket.ticketState=='UNPAID'){
+    if (ticket.ticketState == 'UNPAID') {
         ticketStatusDiv = document.getElementById("ticketStatusDiv");
         paidBtn = document.createElement("button");
         paidBtn.classList.add("btn");
@@ -361,8 +364,36 @@ function createTicketView(ticket){
         paidBtn.style.marginBottom = "2%";
         paidBtn.style.width = "30%";
         paidBtn.type = 'button';
-        paidBtn.innerHTML = 'Paid';
+        paidBtn.innerHTML = 'Pay';
+        paidBtn.setAttribute('data-toggle', 'modal');
+        paidBtn.setAttribute('data-target', '#payment-modal');
+
         ticketStatusDiv.appendChild(paidBtn);
     }
 
+}
+
+function payTheTicket() {
+    uuid = getUrlParam('id');
+    let http = createRequest("/ticket/" + uuid + "/pay", "POST");
+
+    ticketPaymentRequest = new Object();
+    ticketPaymentRequest.price = document.getElementById('ticketPriceInput').value;
+
+
+    var jsonObject = JSON.stringify(ticketPaymentRequest);
+    console.log(jsonObject);
+    http.setRequestHeader("Content-Type", "application/json");
+
+    http.onreadystatechange = function () {
+        if (http.readyState === 4 && http.status === 204) {
+            alert("Success!");
+            redirect("/ticket.html?id=" + uuid);
+        } else if (http.readyState === 4 && http.status != 200) {
+            showErrorMessage(http.responseText);
+            redirect("/index.html");
+        }
+    };
+
+    http.send(jsonObject);
 }
