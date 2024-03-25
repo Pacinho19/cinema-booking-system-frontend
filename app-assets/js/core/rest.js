@@ -37,11 +37,58 @@ function createRequest(path, type) {
     let url = host + path;
 
     http.open(type, url, true);
+    var token = localStorage.getItem("auth");
+    if (token != null)
+        http.setRequestHeader('Authorization', token);
     return http;
 }
 
 function showErrorMessage(message) {
     alert('Wystąpił problem z działaniem aplikacji: ' + message);
+}
+
+function showErrorMessageUnauthorized() {
+    localStorage.removeItem("auth");
+    alert('You not logged. Login first..');
+    redirect('/login.html');
+}
+
+function loginRest() {
+    let url = host + '/authorization';
+
+    let http = new XMLHttpRequest();
+    http.open("POST", url, true);
+
+    var authItem = new Object();
+    authItem.username = document.getElementById("username").value;
+    authItem.password = document.getElementById("password").value;
+
+    var jsonObject = JSON.stringify(authItem);
+    http.setRequestHeader("Content-Type", "application/json");
+
+    http.onreadystatechange = function () {
+        if (http.readyState === 4 && http.status === 200) {
+            let token = http.responseText;
+            document.cookie = "Authorization=Authorization: Bearer " + token + ";secure;HttpOnly";
+            localStorage.setItem('auth', 'Bearer ' + token);
+            console.log(token);
+            window.history.back();
+        } else if (http.readyState === 4 && http.status === 500) {
+            showErrorMessage500();
+        } else if (http.readyState === 4) {
+            document.getElementById('login-error').removeAttribute('hidden');
+        }
+    };
+    http.send(jsonObject);
+}
+
+function goToLoginPage(){
+    redirect('/login.html');
+}
+
+function logout() {
+    localStorage.removeItem("auth");
+    redirect('/index.html');
 }
 
 
@@ -269,8 +316,8 @@ function createScreeningView(screening) {
             seatElement.classList.add(seat.state == 'AVAILABLE' ? 'badge-success' : 'badge-danger');
             seatElement.style = 'flex-basis: 100%; margin:5px'
             seatElement.innerHTML = seat.seat;
-            if (seat.state == 'AVAILABLE') {
-                seatElement.href = "#reservation-confirmation-modal";
+            if (seat.state == 'AVAILABLE' ) {
+                seatElement.href = localStorage.getItem("auth") != null ? "#reservation-confirmation-modal" : "#guest-warning-modal";
                 seatElement.setAttribute('data-toggle', 'modal');
                 seatElement.setAttribute('data-row', seat.row);
                 seatElement.setAttribute('data-seat', seat.seat);
@@ -284,7 +331,6 @@ function createScreeningView(screening) {
         row.style = 'flex-basis: 100%;'
         rowContainer.appendChild(row);
     }
-
 }
 
 function reservation(e) {
@@ -300,7 +346,6 @@ function reservation(e) {
         + " on " + document.getElementById("screeningDate").innerHTML + "?";
 
     document.getElementById('reservation-confirmation-question').innerHTML = text;
-
 }
 
 function confirmReservation() {
@@ -357,7 +402,7 @@ function createTicketView(ticket) {
 
     if (ticket.ticketState == 'UNPAID') {
         ticketStatusDiv = document.getElementById("ticketStatusDiv");
-        paidBtn = document.createElement("button");
+        paidBtn = document.createElement("a");
         paidBtn.classList.add("btn");
         paidBtn.classList.add("btn-success");
         paidBtn.style.marginLeft = "2%";
@@ -367,6 +412,8 @@ function createTicketView(ticket) {
         paidBtn.innerHTML = 'Pay';
         paidBtn.setAttribute('data-toggle', 'modal');
         paidBtn.setAttribute('data-target', '#payment-modal');
+        paidBtn.setAttribute('data-uuid', ticket.uuid);
+        paidBtn.addEventListener("click", paymentModal);
 
         ticketStatusDiv.appendChild(paidBtn);
     }
@@ -374,7 +421,7 @@ function createTicketView(ticket) {
 }
 
 function payTheTicket() {
-    uuid = getUrlParam('id');
+    uuid = document.getElementById("uuid").value;
     let http = createRequest("/ticket/" + uuid + "/pay", "POST");
 
     ticketPaymentRequest = new Object();
@@ -396,4 +443,136 @@ function payTheTicket() {
     };
 
     http.send(jsonObject);
+}
+
+function getUserTickets(){
+
+    let http = createRequest("/ticket/user", "GET");
+    http.onreadystatechange = function () {
+        if (http.readyState === 4 && http.status === 200) {
+            let obj = JSON.parse(http.responseText);
+
+            document.getElementById("main").removeAttribute('hidden');
+            document.getElementById("loader").setAttribute('hidden', true);
+
+            createTicketsList(obj);
+        } else if (http.readyState === 4 && http.status === 401) {
+            showErrorMessageUnauthorized();
+            document.getElementById('login-error').removeAttribute('hidden');
+        }else if (http.readyState === 4 && http.status != 200) {
+            showErrorMessage(http.responseText);
+            redirect("/index.html");
+        }
+    };
+
+    http.send();
+}
+
+function createTicketsList(tickets){
+
+    partitionArray(tickets, 5)
+    .forEach(createTicketCardDeck)
+}
+
+function createTicketCardDeck(tickets){
+    ticketCardDiv = document.createElement("div");
+    ticketCardDiv.classList.add("card-deck");
+    ticketCardDiv.style.marginTop = "1%";
+
+    tickets.forEach(ticket => {
+        ticketCard = createTicketCard(ticket);
+        ticketCardDiv.appendChild(ticketCard);
+    });
+
+    document.getElementById("main").appendChild(ticketCardDiv);
+}
+
+function createTicketCard(ticket){
+    cardDivParent = document.createElement("div");
+    cardDivParent.classList.add("col-md-2");
+
+    cardDiv = document.createElement("div");
+    cardDiv.classList.add("card");
+    cardDivParent.appendChild(cardDiv);
+
+    img = document.createElement("img");
+    img.classList.add("card-img-top");
+    img.src = ticket.movie.imgUrl;
+    img.style.width = '150px';
+    img.style.height = '250px';
+    img.style.margin = "0 auto";
+    img.style.marginTop = "2%";
+    cardDiv.appendChild(img);
+
+    cardBodyDiv = document.createElement("div");
+    cardBodyDiv.classList.add("card-body");
+    cardDiv.appendChild(cardBodyDiv);
+
+    cardTitleLinkP = document.createElement("p");
+    cardTitleLink = document.createElement("a");
+    cardTitleLink.href = "/ticket.html?id=" + ticket.uuid;
+    cardTitleLink.innerHTML = ticket.uuid;
+    cardTitleLink.style.textAlign = "center";
+    cardTitleLinkP.appendChild(cardTitleLink);
+    cardBodyDiv.appendChild(cardTitleLinkP);
+
+    descriptionP = document.createElement("p");
+    descriptionP.classList.add("card-text");
+    descriptionP.innerHTML = "Row: " + ticket.screeningSeat.row + " Seat: " + ticket.screeningSeat.seat;
+    cardBodyDiv.appendChild(descriptionP);
+
+    descriptionP2 = document.createElement("p");
+    descriptionP2.classList.add("card-text");
+    descriptionP2.innerHTML = 'Screaning date: ' + ticket.screening.date;
+    cardBodyDiv.appendChild(descriptionP2);
+
+    cardFooter = document.createElement("div");
+    cardFooter.classList.add("card-footer");
+    cardDiv.appendChild(cardFooter);
+
+    description = createMovieSmallDescriptionElement('Reservation date: ' + ticket.reservationDate);
+    cardFooter.appendChild(description);
+
+    ticketStateDiv =  document.createElement("div");
+    ticketStateDiv.classList.add("row");
+
+    ticketStateDivCol1 = document.createElement("div");
+    ticketStateDivCol1.classList.add("col-md-6");
+    ticketStateDiv.appendChild(ticketStateDivCol1);
+    ticketStateDivCol1.style = 'display: flex; align-items: center;';
+
+    ticketState =  document.createElement("label");
+    ticketState.innerHTML = ticket.ticketState;
+    ticketState.style = 'margin: 0px; display: table-cell; vertical-align: middle;'
+    ticketState.style.color = ticket.ticketState == 'UNPAID' ? 'red' : 'green';
+    ticketStateDivCol1.appendChild(ticketState);
+
+    cardFooter.appendChild(ticketStateDiv);
+    
+    if(ticket.ticketState == 'UNPAID'){
+        ticketStateDiv2 = document.createElement("div");
+        ticketStateDiv2.classList.add("col-md-6");
+        ticketStateDiv2.style.textAlign = "right";
+        ticketStateDiv.appendChild(ticketStateDiv2);
+
+        paidBtn = document.createElement("a");
+        paidBtn.classList.add("btn");
+        paidBtn.classList.add("btn-success");
+        paidBtn.type = 'button';
+        paidBtn.innerHTML = 'Pay';
+        paidBtn.setAttribute('data-toggle', 'modal');
+        paidBtn.setAttribute('data-target', '#payment-modal');
+        paidBtn.setAttribute('data-uuid', ticket.uuid);
+        paidBtn.addEventListener("click", paymentModal);
+        ticketStateDiv2.appendChild(paidBtn);
+    }
+
+    return cardDivParent;
+}
+
+function paymentModal(e) {
+    var a = $(e.currentTarget);
+    var uuid = a.attr('data-uuid');
+    console.log(uuid);
+    document.getElementById("uuid").value = uuid;
 }
