@@ -122,18 +122,35 @@ function createMovieCardDeck(movies) {
     cardDeckDiv.classList.add("card-deck");
     cardDeckDiv.style.marginTop = "1%";
 
+    emptyDiv = createEmptyDiv("col-md-1");
+    cardDeckDiv.appendChild(emptyDiv);
+
     movies.forEach(movie => {
         movieCard = createMovieCard(movie);
         cardDeckDiv.appendChild(movieCard);
     });
 
+    emptyDiv2 = createEmptyDiv("col-md-1");
+    cardDeckDiv.appendChild(emptyDiv2);
+
     document.getElementById("main").appendChild(cardDeckDiv);
 }
 
+function createEmptyDiv(className){
+    div = document.createElement("div");
+    div.classList.add(className);
+    return div;
+}
+
 function createMovieCard(movie) {
+    cardDivParent = document.createElement("div");
+    cardDivParent.classList.add("col-md-2");
+
     cardDiv = document.createElement("div");
     cardDiv.classList.add("card");
-    cardDiv.classList.add("col-md-2");
+    cardDiv.style.height = "100%";
+
+    cardDivParent.appendChild(cardDiv);
 
     img = document.createElement("img");
     img.classList.add("card-img-top");
@@ -159,7 +176,7 @@ function createMovieCard(movie) {
 
     descriptionP = document.createElement("p");
     descriptionP.classList.add("card-text");
-    descriptionP.innerHTML = movie.description;
+    descriptionP.innerHTML = movie.briefDescription;
     cardBodyDiv.appendChild(descriptionP);
 
     cardFooter = document.createElement("div");
@@ -172,7 +189,7 @@ function createMovieCard(movie) {
     descriptionP2 = createMovieSmallDescriptionElement('Duration: ' + movie.duration + ' minutes');
     cardFooter.appendChild(descriptionP2);
 
-    return cardDiv;
+    return cardDivParent;
 }
 
 function createMovieSmallDescriptionElement(text) {
@@ -427,7 +444,6 @@ function payTheTicket() {
     ticketPaymentRequest = new Object();
     ticketPaymentRequest.price = document.getElementById('ticketPriceInput').value;
 
-
     var jsonObject = JSON.stringify(ticketPaymentRequest);
     console.log(jsonObject);
     http.setRequestHeader("Content-Type", "application/json");
@@ -479,10 +495,16 @@ function createTicketCardDeck(tickets){
     ticketCardDiv.classList.add("card-deck");
     ticketCardDiv.style.marginTop = "1%";
 
+    emptyDiv = createEmptyDiv("col-md-1");
+    ticketCardDiv.appendChild(emptyDiv);
+
     tickets.forEach(ticket => {
         ticketCard = createTicketCard(ticket);
         ticketCardDiv.appendChild(ticketCard);
     });
+
+    emptyDiv2 = createEmptyDiv("col-md-1");
+    ticketCardDiv.appendChild(emptyDiv2);
 
     document.getElementById("main").appendChild(ticketCardDiv);
 }
@@ -493,6 +515,8 @@ function createTicketCard(ticket){
 
     cardDiv = document.createElement("div");
     cardDiv.classList.add("card");
+    cardDiv.style.height = "100%";
+
     cardDivParent.appendChild(cardDiv);
 
     img = document.createElement("img");
