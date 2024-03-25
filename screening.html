@@ -40,7 +40,7 @@
         </div>
     </div>
 
-    <div id="main" class="container" style="max-width: 80%;margin-top: 2%;">
+    <div id="main" class="container" style="max-width: 80%;margin-top: 2%;" hidden>
 
         <div>
             <div class="row">
@@ -48,7 +48,9 @@
                     <img id="movieImg">
                 </div>
                 <div class="col-md-9">
-                    <h3 id="movieTitle"></h3>
+                    <a id="movieTitleHref">
+                        <h3 id="movieTitle"></h3>
+                    </a>
                     <p id="screeningRoomNumber"></p>
                     <p id="screeningDate"></p>
                     <p id="ticketPrice"></p>
@@ -103,19 +105,23 @@
                     <div class="modal-footer">
                         <input type="hidden" id="reservation-row">
                         <input type="hidden" id="reservation-seat">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#reservation-confirmation-modal" data-dismiss="modal">Continue as guest</button>
+                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                            data-target="#reservation-confirmation-modal" data-dismiss="modal">Continue as
+                            guest</button>
                         <button type="button" class="btn btn-secondary" onclick="goToLoginPage()">Login</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <script>
-            $(function () {
-                $("#nav-placeholder").load("navbar.html");
-            });
-        </script>
-        <script src="app-assets/js/core/rest.js" type="text/javascript"></script>
+    </div>
+
+    <script>
+        $(function () {
+            $("#nav-placeholder").load("navbar.html");
+        });
+    </script>
+    <script src="app-assets/js/core/rest.js" type="text/javascript"></script>
 </body>
 
 </html>

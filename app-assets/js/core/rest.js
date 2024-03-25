@@ -310,6 +310,7 @@ function createScreeningView(screening) {
     movieImg.style.marginTop = "2%";
 
     document.getElementById("movieTitle").innerHTML = screening.movie.title;
+    document.getElementById("movieTitleHref").href = "/movie.html?alias=" + screening.movie.alias;
     document.getElementById("screeningRoomNumber").innerHTML = 'Room ' + screening.roomNumber;
     document.getElementById("screeningDate").innerHTML = 'Date: ' + screening.date + ' ' + screening.time;
     document.getElementById("ticketPrice").innerHTML = 'Ticket price: ' + screening.ticketPrice + ' PLN';
@@ -409,6 +410,7 @@ function createTicketView(ticket) {
     movieImg.style.height = '350px';
 
     document.getElementById("movieTitle").innerHTML = ticket.movie.title;
+    document.getElementById("movieTitleHref").href = "/movie.html?alias=" + ticket.movie.alias;
     document.getElementById("screeningRoomNumber").innerHTML = 'Room: ' + ticket.screening.roomNumber;
     document.getElementById("screeningSeatAndRow").innerHTML = 'Row: ' + ticket.screeningSeat.row + ' Seat: ' + ticket.screeningSeat.seat;
     document.getElementById("screeningDate").innerHTML = 'Screaning date: ' + ticket.screening.date;
